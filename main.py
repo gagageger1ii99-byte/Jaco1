@@ -1,41 +1,52 @@
 import subprocess
 import time
 import sys
+import re
+from curl_cffi import requests
 
 JACO_URL = "https://l.jaco.live/byOcscLNLM"
 RESTREAM_KEY = "re_11725544_event26e01ff7e85c4d7da9516028613ba1dc"
 RESTREAM_TARGET = f"rtmp://live.restream.io/live/{RESTREAM_KEY}"
 
+def get_jaco_stream_url(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5"
+    }
+    try:
+        response = requests.get(url, headers=headers, impersonate="chrome")
+        if response.status_code == 200:
+            html_content = response.text
+            # البحث عن رابط البث المباشر (m3u8 أو mp4) داخل كود الصفحة
+            match = re.search(r'https?://[^\s<>"]+?\.m3u8[^\s<>"]*', html_content)
+            if match:
+                return match.group(0)
+    except Exception as e:
+        print(f"[-] Error fetching Jaco page: {e}", flush=True)
+    return None
+
 def start_bridge():
     print(f"[*] Starting Jaco to Restream Bridge for: {JACO_URL}", flush=True)
-    
-    ytdlp_cmd = [
-        sys.executable, "-m", "yt_dlp",
-        "--no-check-certificates",
-        "--geo-bypass",
-        "--extractor-args", "generic:impersonate=chrome",
-        "--get-url",
-        JACO_URL
-    ]
     
     while True:
         p2 = None
         try:
             print("[*] Fetching secure Jaco stream direct URL...", flush=True)
-            direct_url = subprocess.check_output(ytdlp_cmd, universal_newlines=True).strip()
+            direct_url = get_jaco_stream_url(JACO_URL)
             
-            if not direct_url or "http" not in direct_url:
+            if not direct_url:
                 print("[!] Stream URL not found or channel is currently offline. Retrying in 15 seconds...", flush=True)
                 time.sleep(15)
                 continue
 
-            print("[*] Secure stream URL acquired! Launching FFmpeg to Restream...", flush=True)
+            print(f"[*] Secure stream URL acquired! Launching FFmpeg...", flush=True)
             
             ffmpeg_cmd = [
                 "ffmpeg",
                 "-re",
                 "-fflags", "+genpts+nobuffer",
-                "-user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "-user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                 "-i", direct_url,
                 "-c:v", "libx264",
                 "-preset", "veryfast",
@@ -72,4 +83,3 @@ def start_bridge():
 
 if __name__ == "__main__":
     start_bridge()
-

@@ -4,7 +4,7 @@ import requests
 
 # توكن بوت التيليجرام الخاص بك (حطه هنا مباشرة)
 TELEGRAM_BOT_TOKEN = "8940615375:AAGJa9uYkr3DiyQeWf8JUKWu1aATh5G3juo" # حط توكن بوتك هنا إذا مو محفوظ برالواي
-GITHUB_TOKEN = "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"
+GITHUB_TOKEN = "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"
 REPO_OWNER = "gagagegerli99-byte"
 REPO_NAME = "Jaco1"
 

@@ -3,20 +3,54 @@ name: Start_Stream
 on:
   workflow_dispatch:
     inputs:
-      platform:
-        description: 'Platform (youtube or restream)'
+      platform_1:
+        description: 'بث رقم 1 - المنصة (youtube أو restream)'
         required: false
         default: 'youtube'
         type: choice
         options:
           - youtube
           - restream
-      channel_name:
-        description: 'Kick Channel Name'
+      channel_1:
+        description: 'بث رقم 1 - اسم قناة كيك'
         required: false
         type: string
-      stream_key:
-        description: 'Stream Key'
+      key_1:
+        description: 'بث رقم 1 - مفتاح البث'
+        required: false
+        type: string
+
+      platform_2:
+        description: 'بث رقم 2 - المنصة (youtube أو restream)'
+        required: false
+        default: 'youtube'
+        type: choice
+        options:
+          - youtube
+          - restream
+      channel_2:
+        description: 'بث رقم 2 - اسم قناة كيك'
+        required: false
+        type: string
+      key_2:
+        description: 'بث رقم 2 - مفتاح البث'
+        required: false
+        type: string
+
+      platform_3:
+        description: 'بث رقم 3 - المنصة (youtube أو restream)'
+        required: false
+        default: 'youtube'
+        type: choice
+        options:
+          - youtube
+          - restream
+      channel_3:
+        description: 'بث رقم 3 - اسم قناة كيك'
+        required: false
+        type: string
+      key_3:
+        description: 'بث رقم 3 - مفتاح البث'
         required: false
         type: string
 
@@ -38,10 +72,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      - name: Run Stream Script
+      - name: Run Multi-Stream Script
         env:
-          PLATFORM: ${{ inputs.platform }}
-          CHANNEL_NAME: ${{ inputs.channel_name }}
-          STREAM_KEY: ${{ inputs.stream_key }}
+          PLATFORM_1: ${{ inputs.platform_1 }}
+          CHANNEL_1: ${{ inputs.channel_1 }}
+          KEY_1: ${{ inputs.key_1 }}
+          PLATFORM_2: ${{ inputs.platform_2 }}
+          CHANNEL_2: ${{ inputs.channel_2 }}
+          KEY_2: ${{ inputs.key_2 }}
+          PLATFORM_3: ${{ inputs.platform_3 }}
+          CHANNEL_3: ${{ inputs.channel_3 }}
+          KEY_3: ${{ inputs.key_3 }}
         run: |
           python main.py

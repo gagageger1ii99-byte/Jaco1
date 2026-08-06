@@ -6,6 +6,10 @@ platform = os.getenv("PLATFORM", "youtube").lower()
 channel_name = os.getenv("CHANNEL_NAME")
 stream_key = os.getenv("STREAM_KEY")
 
+if not channel_name or not stream_key:
+    print("Error: Missing CHANNEL_NAME or STREAM_KEY. Please fill them in Secrets.")
+    exit(1)
+
 print(f"Fetching live stream for Kick channel: {channel_name}...")
 
 kick_api_url = f"https://kick.com/api/v2/channels/{channel_name}"
@@ -17,7 +21,7 @@ try:
     response = requests.get(kick_api_url, headers=headers)
     data = response.json()
     
-    playback_url = data["playback_url"]
+    playback_url = data.get("playback_url")
     
     if not playback_url:
         print("Error: The channel is offline or playback URL not found!")

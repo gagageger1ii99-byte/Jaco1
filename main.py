@@ -1,83 +1,50 @@
-import subprocess
-import time
-import sys
-from curl_cffi import requests
+import os
+import telebot
+import requests
 
-CHANNEL_NAME = "w1pey"
-# تم دمج رابط يوتيوب ومفتاح البث الخاص بك هنا مباشرة
-YOUTUBE_TARGET = "rtmp://a.rtmp.youtube.com/live2/7swd-bmce-ym7w-5e2m-499u"
+# توكن بوت التيليجرام الخاص بك (حطه هنا مباشرة)
+TELEGRAM_BOT_TOKEN = "8940615375:AAGJa9uYkr3DiyQeWf8JUKWu1aATh5G3juo" # حط توكن بوتك هنا إذا مو محفوظ برالواي
+GITHUB_TOKEN = "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"
+REPO_OWNER = "gagagegerli99-byte"
+REPO_NAME = "Jaco1"
 
-def get_kick_playback_url(channel):
-    api_url = f"https://kick.com/api/v2/channels/{channel}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json",
-        "Referer": "https://kick.com/",
-        "Origin": "https://kick.com/"
-    }
-    try:
-        response = requests.get(api_url, headers=headers, impersonate="chrome")
-        if response.status_code == 200:
-            data = response.json()
-            return data.get('playback_url')
-    except Exception as e:
-        print(f"[-] Error fetching Kick API: {e}", flush=True)
-    return None
+bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 
-def start_bridge():
-    print(f"[*] Starting Kick to YouTube Bridge for channel: {CHANNEL_NAME}", flush=True)
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, f"Hello {message.from_user.first_name}! Bot is ready.\nUse command:\n/stream [channel_name] [stream_key]")
+
+@bot.message_handler(commands=['stream'])
+def trigger_github_action(message):
+    args = message.text.split()
+    if len(args) < 3:
+        bot.reply_to(message, "❌ خطأ! استخدم الأمر هكذا:\n/stream [channel_name] [stream_key]")
+        return
     
-    while True:
-        p2 = None
-        try:
-            print("[*] Fetching Kick playback URL...", flush=True)
-            direct_url = get_kick_playback_url(CHANNEL_NAME)
-            
-            if not direct_url:
-                print("[!] Channel is offline or URL not found. Retrying in 20 seconds...", flush=True)
-                time.sleep(20)
-                continue
+    channel_name = args[1]
+    stream_key = args[2]
+    
+    bot.reply_to(message, f"⏳ Sending request to GitHub to start stream for: {channel_name}...")
+    
+    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/dispatches"
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json"
+    }
+    payload = {
+        "event_type": "start_stream",
+        "client_payload": {
+            "channel_name": channel_name,
+            "stream_key": stream_key
+        }
+    }
+    
+    response = requests.post(url, json=payload, headers=headers)
+    
+    if response.status_code == 204:
+        bot.reply_to(message, "✅ تم إرسال طلب تشغيل البث بنجاح إلى GitHub Actions!")
+    else:
+        bot.reply_to(message, f"❌ GitHub Error: {response.status_code}")
 
-            print(f"[*] Playback URL acquired! Launching FFmpeg to YouTube...", flush=True)
-            
-            ffmpeg_cmd = [
-                "ffmpeg",
-                "-re",
-                "-fflags", "+genpts+nobuffer",
-                "-i", direct_url,
-                "-c:v", "libx264",
-                "-preset", "veryfast",
-                "-maxrate", "3000k",
-                "-bufsize", "6000k",
-                "-pix_fmt", "yuv420p",
-                "-g", "60",
-                "-c:a", "aac",
-                "-b:a", "128k",
-                "-ar", "44100",
-                "-f", "flv",
-                YOUTUBE_TARGET
-            ]
-            
-            p2 = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
-            # مراقبة حالة البث واستمرار العمل طالما القناة مبثة
-            while True:
-                retcode = p2.poll()
-                if retcode is not None:
-                    print(f"\n[!] FFmpeg ended with code {retcode}. Reconnecting...", flush=True)
-                    break
-                time.sleep(15)
-                
-        except Exception as e:
-            print(f"[-] Error: {e}", flush=True)
-            
-        try:
-            if p2: p2.kill()
-        except:
-            pass
-            
-        print("[!] Re-checking channel status in 10 seconds...", flush=True)
-        time.sleep(10)
-
-if __name__ == "__main__":
-    start_bridge()
+if __name__ == '__main__':
+    bot.infinity_polling()

@@ -2,47 +2,29 @@ name: Start_Stream
 
 on:
   workflow_dispatch:
-    inputs:
-      platform:
-        description: 'Select Platform'
-        required: true
-        default: 'youtube'
-        type: choice
-        options:
-          - youtube
-          - restream
-      channel_name:
-        description: 'Channel Name'
-        required: true
-        default: 'firas'
-      stream_key:
-        description: 'Stream Key/Event ID'
-        required: true
-        default: ''
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg
-        pip install requests curl_cffi
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
 
-    - name: Start Bridge
-      env:
-        PLATFORM: ${{ github.event.inputs.platform }}
-        CHANNEL_NAME: ${{ github.event.inputs.channel_name }}
-        STREAM_KEY: ${{ github.event.inputs.stream_key }}
-      run: |
-        python3 main.py
+      - name: Run Stream Script
+        env:
+          PLATFORM: ${{ secrets.PLATFORM }}
+          CHANNEL_NAME: ${{ secrets.CHANNEL_NAME }}
+          STREAM_KEY: ${{ secrets.STREAM_KEY }}
+        run: |
+          python main.py

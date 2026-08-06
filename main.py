@@ -2,15 +2,19 @@ import os
 import subprocess
 import requests
 
-# ----------------- عبي بياناتك هنا مباشرة -----------------
-PLATFORM = "youtube"              # المنصة (مثلاً: youtube أو restream)
-CHANNEL_NAME = "اسم_قناة_كيك_هنا"   # اكتب اسم قناة كيك هنا بين الأقواس
-STREAM_KEY = "مفتاح_البث_هنا"       # الصق مفتاح البث حق يوتيوب هنا بين الأقواس
-# -----------------------------------------------------------
+platform = os.getenv("PLATFORM", "youtube").lower()
+channel_name = os.getenv("CHANNEL_NAME")
+stream_key = os.getenv("STREAM_KEY")
 
-print(f"Fetching live stream for Kick channel: {CHANNEL_NAME}...")
+# التحقق من البيانات وإدارتها بمرونة دون إيقاف السكربت كخطأ فادح إذا توفرت البدائل
+if not channel_name or not stream_key:
+    print("Warning: Either CHANNEL_NAME or STREAM_KEY is missing or empty.")
+    print("Please ensure both fields are filled if you want the stream to start.")
+    exit(0)
 
-kick_api_url = f"https://kick.com/api/v2/channels/{CHANNEL_NAME}"
+print(f"Fetching live stream for Kick channel: {channel_name}...")
+
+kick_api_url = f"https://kick.com/api/v2/channels/{channel_name}"
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 }
@@ -30,14 +34,14 @@ except Exception as e:
     print(f"Error fetching Kick API: {e}")
     exit(1)
 
-if PLATFORM == "youtube":
-    rtmp_url = f"rtmp://a.rtmp.youtube.com/live2/{STREAM_KEY}"
-elif PLATFORM == "restream":
-    rtmp_url = f"rtmp://live.restream.io/live/{STREAM_KEY}"
+if platform == "youtube":
+    rtmp_url = f"rtmp://a.rtmp.youtube.com/live2/{stream_key}"
+elif platform == "restream":
+    rtmp_url = f"rtmp://live.restream.io/live/{stream_key}"
 else:
-    rtmp_url = f"rtmp://a.rtmp.youtube.com/live2/{STREAM_KEY}"
+    rtmp_url = f"rtmp://a.rtmp.youtube.com/live2/{stream_key}"
 
-print(f"Starting bridge to platform: {PLATFORM}")
+print(f"Starting bridge to platform: {platform}")
 
 cmd = [
     "ffmpeg",

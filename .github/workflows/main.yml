@@ -1,7 +1,16 @@
-name: Kick_To_YouTube_Bridge
+name: Start_Stream
 
 on:
   workflow_dispatch:
+    inputs:
+      channel_name:
+        description: 'Channel Name'
+        required: true
+        default: 'firas'
+      stream_key:
+        description: 'Stream Key'
+        required: true
+        default: ''
 
 jobs:
   build:
@@ -20,7 +29,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y ffmpeg
-        pip install curl_cffi requests
+        pip install requests curl_cffi
 
     - name: Start Bridge
-      run: python3 main.py
+      env:
+        CHANNEL_NAME: ${{ github.event.inputs.channel_name }}
+        STREAM_KEY: ${{ github.event.inputs.stream_key }}
+      run: |
+        python3 main.py

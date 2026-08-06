@@ -2,6 +2,23 @@ name: Start_Stream
 
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform (youtube or restream)'
+        required: false
+        default: 'youtube'
+        type: choice
+        options:
+          - youtube
+          - restream
+      channel_name:
+        description: 'Kick Channel Name'
+        required: false
+        type: string
+      stream_key:
+        description: 'Stream Key'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -23,8 +40,8 @@ jobs:
 
       - name: Run Stream Script
         env:
-          PLATFORM: ${{ secrets.PLATFORM }}
-          CHANNEL_NAME: ${{ secrets.CHANNEL_NAME }}
-          STREAM_KEY: ${{ secrets.STREAM_KEY }}
+          PLATFORM: ${{ inputs.platform }}
+          CHANNEL_NAME: ${{ inputs.channel_name }}
+          STREAM_KEY: ${{ inputs.stream_key }}
         run: |
           python main.py

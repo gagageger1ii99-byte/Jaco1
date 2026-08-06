@@ -10,18 +10,26 @@ RESTREAM_TARGET = f"rtmp://live.restream.io/live/{RESTREAM_KEY}"
 
 def get_jaco_stream_url(url):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5"
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ar-SA,ar;q=0.9,en;q=0.8"
     }
     try:
-        response = requests.get(url, headers=headers, impersonate="chrome")
+        # استخدام متصفح الجوال لأن روابط l.jaco.live توجه غالباً لتطبيق الهاتف
+        response = requests.get(url, headers=headers, impersonate="safari_ios")
+        print(f"[*] HTTP Status Code: {response.status_code}", flush=True)
+        
         if response.status_code == 200:
             html_content = response.text
-            # البحث عن رابط البث المباشر (m3u8 أو mp4) داخل كود الصفحة
-            match = re.search(r'https?://[^\s<>"]+?\.m3u8[^\s<>"]*', html_content)
+            # البحث عن أي رابط ميديا مباشر
+            match = re.search(r'(https?://[^\s<>"]+?\.(?:m3u8|flv|mp4)[^\s<>"]*)', html_content)
             if match:
-                return match.group(0)
+                found_url = match.group(1)
+                print(f"[*] Found media URL: {found_url}", flush=True)
+                return found_url
+            else:
+                # طباعة جزء من المحتوى للتشخيص لو لم يجد الرابط
+                print("[!] Media URL pattern not found in HTML response.", flush=True)
     except Exception as e:
         print(f"[-] Error fetching Jaco page: {e}", flush=True)
     return None
@@ -46,7 +54,7 @@ def start_bridge():
                 "ffmpeg",
                 "-re",
                 "-fflags", "+genpts+nobuffer",
-                "-user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "-user_agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X)",
                 "-i", direct_url,
                 "-c:v", "libx264",
                 "-preset", "veryfast",

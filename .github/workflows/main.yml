@@ -3,12 +3,20 @@ name: Start_Stream
 on:
   workflow_dispatch:
     inputs:
+      platform:
+        description: 'Select Platform'
+        required: true
+        default: 'youtube'
+        type: choice
+        options:
+          - youtube
+          - restream
       channel_name:
         description: 'Channel Name'
         required: true
         default: 'firas'
       stream_key:
-        description: 'Stream Key'
+        description: 'Stream Key/Event ID'
         required: true
         default: ''
 
@@ -33,6 +41,7 @@ jobs:
 
     - name: Start Bridge
       env:
+        PLATFORM: ${{ github.event.inputs.platform }}
         CHANNEL_NAME: ${{ github.event.inputs.channel_name }}
         STREAM_KEY: ${{ github.event.inputs.stream_key }}
       run: |
